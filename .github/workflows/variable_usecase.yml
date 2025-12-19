@@ -18,10 +18,10 @@ on:
           - production
         default: qa
     
-  # push:
-  #   branches: # This key is required to list branches
-  #     - master
-  #     - variables_example-_branch
+  push:
+    branches: # This key is required to list branches
+      - master
+      - develop
 env:
   name: Ranjith
 jobs:
@@ -38,3 +38,20 @@ jobs:
           echo "Triggered by: ${{ github.triggering_actor }}"  >> $GITHUB_STEP_SUMMARY
           echo "Input value accepted during WF trigger: ${{ github.event.inputs.variable_1 }}"   >> $GITHUB_STEP_SUMMARY
           echo "Target environment for deployment: ${{ github.event.inputs.target_env }}"   >> $GITHUB_STEP_SUMMARY
+
+       - name: "Checkout ${{ github.repository }}"
+         if: success()
+         uses: actions/checkout@v4
+         with:
+          ref: develop
+          path: project-repo
+          fetch-depth: 0
+
+
+       - name: "Check type of trigger"
+         id: trigger_type
+         run: |
+           echo "Current path: ${pwd}"
+           ls -lrt
+         
+      
