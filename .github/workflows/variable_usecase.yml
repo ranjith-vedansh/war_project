@@ -62,5 +62,6 @@ jobs:
           fi
       
        - name: Use Server Name
-         run: echo "Targeting server: $servername"
+         run: |
+          echo "Targeting server: $servername"
 
