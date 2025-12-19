@@ -21,6 +21,7 @@ jobs:
         ref: 'master'
     
     - name: Install pre-requisite (Java and Maven)
+      if: always()
       run: |
         echo "Verify Java installation"
         if ! command -v java &> /dev/null
