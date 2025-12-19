@@ -18,14 +18,14 @@ on:
           - production
         default: qa
   schedule:
-    - cron: '26 3 * * *'
+    - cron: '35 4 * * *'
   push:
     branches: # This key is required to list branches
       - master
       - develop
 env:
   name: Ranjith
-  servername: Default_Server
+  servername: Default
 jobs:
    job1_printing_variable_name:
      runs-on: ubuntu-latest
@@ -58,7 +58,7 @@ jobs:
           elif [ "${{ github.event_name }}" == "schedule" ]; then
             echo "servername=Prod" >> $GITHUB_ENV
           else
-            echo "servername=Default_Server" >> $GITHUB_ENV
+            echo "servername=$servername" >> $GITHUB_ENV
           fi
       
        - name: Use Server Name
