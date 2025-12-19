@@ -18,7 +18,7 @@ on:
           - production
         default: qa
   schedule:
-    - cron: '47 8 * * *'
+    - cron: '24 3 * * *'
   push:
     branches: # This key is required to list branches
       - master
@@ -48,23 +48,18 @@ jobs:
           path: project-repo
           fetch-depth: 0
 
-       # - name: "Check type of trigger"
-       #   id: trigger_type
-       #   if: github.event_name == 'push'
-       #   run: |
-       #     echo "trigger_type: push_based_trigger"
-       #     echo "Current path: $(pwd)"    >> $GITHUB_STEP_SUMMARY
-       #     ls -lrt    >> $GITHUB_STEP_SUMMARY
-       #   working-directory: project-repo
-
-       - name: Verify trigger type and set server name
-         id: trigger_type
+       - name: Verify trigger type and assign server name
          run: |
-            if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event_name }}" == "schedule" ]; then
-              echo "servername=DR_1" >> $GITHUB_ENV
-            else
-              echo "servername=Pre_prod" >> $GITHUB_ENV
-            fi
-          
-       - name: Use server name
-         run: echo "The server is $servername"     >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "servername=DR_1" >> $GITHUB_ENV
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "servername=Pre_prod" >> $GITHUB_ENV
+          elif [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "servername=Prod" >> $GITHUB_ENV
+          else
+            echo "servername=Default_Server" >> $GITHUB_ENV
+          fi
+      
+       - name: Use Server Name
+         run: echo "Targeting server: $servername"
+
