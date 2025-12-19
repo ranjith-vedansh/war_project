@@ -18,13 +18,14 @@ on:
           - production
         default: qa
   schedule:
-    - cron: '24 3 * * *'
+    - cron: '26 3 * * *'
   push:
     branches: # This key is required to list branches
       - master
       - develop
 env:
   name: Ranjith
+  servername: Default_Server
 jobs:
    job1_printing_variable_name:
      runs-on: ubuntu-latest
