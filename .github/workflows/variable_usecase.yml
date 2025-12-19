@@ -17,7 +17,8 @@ on:
           - staging
           - production
         default: qa
-    
+  schedule:
+    - cron: '47 8 * * *'
   push:
     branches: # This key is required to list branches
       - master
@@ -47,10 +48,23 @@ jobs:
           path: project-repo
           fetch-depth: 0
 
+       # - name: "Check type of trigger"
+       #   id: trigger_type
+       #   if: github.event_name == 'push'
+       #   run: |
+       #     echo "trigger_type: push_based_trigger"
+       #     echo "Current path: $(pwd)"    >> $GITHUB_STEP_SUMMARY
+       #     ls -lrt    >> $GITHUB_STEP_SUMMARY
+       #   working-directory: project-repo
 
-       - name: "Check type of trigger"
+       - name: Verify trigger type and set server name
          id: trigger_type
          run: |
-           echo "Current path: $(pwd)"    >> $GITHUB_STEP_SUMMARY
-           ls -lrt    >> $GITHUB_STEP_SUMMARY
-         working-directory: project-repo
+            if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event_name }}" == "schedule" ]; then
+              echo "servername=DR_1" >> $GITHUB_ENV
+            else
+              echo "servername=Pre_prod" >> $GITHUB_ENV
+            fi
+          
+       - name: Use server name
+         run: echo "The server is $servername"     >> $GITHUB_STEP_SUMMARY
