@@ -18,10 +18,10 @@ on:
           - production
         default: qa
     
-  # push:
-  #   branches: # This key is required to list branches
-  #     - master
-  #     - variables_example-_branch
+  push:
+    branches: # This key is required to list branches
+      - master
+      - develop
 env:
   name: Ranjith
 jobs:
@@ -43,7 +43,14 @@ jobs:
          if: success()
          uses: actions/checkout@v4
          with:
-           ref: develop
-           
-         
-      
+          ref: develop
+          path: project-repo
+          fetch-depth: 0
+
+
+       - name: "Check type of trigger"
+         id: trigger_type
+         run: |
+           echo "Current path: $(pwd)"    >> $GITHUB_STEP_SUMMARY
+           ls -lrt    >> $GITHUB_STEP_SUMMARY
+         working-directory: project-repo
