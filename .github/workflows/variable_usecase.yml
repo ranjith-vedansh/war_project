@@ -1,0 +1,40 @@
+name: Variable Usecase Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      variable_1:
+        description: 'Accepting I/O value, which I use in workflow'
+        required: true
+        type: string
+        default: devops_var
+      target_env:
+        description: 'Environment name for Deploying the artifact'
+        required: true
+        type: choice
+        options:
+          - qa
+          - staging
+          - production
+        default: qa
+    
+  # push:
+  #   branches: # This key is required to list branches
+  #     - master
+  #     - variables_example-_branch
+env:
+  name: Ranjith
+jobs:
+   job1_printing_variable_name:
+     runs-on: ubuntu-latest
+     env:
+       os: Linux
+     steps:
+       - name: step1_Usecase_for_variables_name # Added a space before 'name'
+         run: |
+          echo "My name is $name" >> $GITHUB_STEP_SUMMARY
+          echo "Repo name: ${{ github.repository }}"  >> $GITHUB_STEP_SUMMARY
+          echo "Workflow name: ${{ github.workflow }}"  >> $GITHUB_STEP_SUMMARY
+          echo "Triggered by: ${{ github.triggering_actor }}"  >> $GITHUB_STEP_SUMMARY
+          echo "Input value accepted during WF trigger: ${{ github.event.inputs.variable_1 }}"   >> $GITHUB_STEP_SUMMARY
+          echo "Target environment for deployment: ${{ github.event.inputs.target_env }}"   >> $GITHUB_STEP_SUMMARY

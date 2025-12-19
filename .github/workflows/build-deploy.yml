@@ -1,0 +1,52 @@
+name: Build and Deploy Java Application
+
+on:
+  workflow_dispatch:
+    
+  push:
+    branches:
+      - master
+      - patch-1
+      - pre-production
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout ${{ github.repository }}
+      uses: actions/checkout@v4
+      with:
+        repository: 'ranjith-vedansh/java-hello-world-war.git'
+        ref: 'master'
+    
+    - name: Install pre-requisite (Java and Maven)
+      run: |
+        echo "Verify Java installation"
+        if ! command -v java &> /dev/null
+        then
+            echo "Java not found. Installing OpenJDK..."
+            sudo apt-get update
+            sudo apt-get install -y openjdk-11-jdk
+        else
+            echo "Java is already installed:"
+            java --version
+        fi
+
+        echo "Verify Maven installation"
+        if ! command -v mvn &> /dev/null
+        then
+            echo "Maven not found. Installing Maven..."
+            sudo apt-get update
+            sudo apt-get install -y maven
+        else
+            echo "Maven is already installed:"
+            mvn --version
+        fi
+    - name: Build the application
+      run: mvn clean package
+
+    - name: Deploy to Server
+      run: |
+        echo "Checking for *.war file under targerst directory"  
+        ls -Rlrt
