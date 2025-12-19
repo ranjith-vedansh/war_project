@@ -38,7 +38,7 @@ jobs:
           echo "Repo name: ${{ github.repository }}"  >> $GITHUB_STEP_SUMMARY
           echo "Workflow name: ${{ github.workflow }}"  >> $GITHUB_STEP_SUMMARY
           echo "Triggered by: ${{ github.triggering_actor }}"  >> $GITHUB_STEP_SUMMARY
-          echo "Input value accepted during WF trigger: ${{ github.event.inputs.variable_1 }}"   >> $GITHUB_STEP_SUMMARY
+          echo "Input value accepted during WF trigger: ${{ github.event.inputs.variable_1 }"   >> $GITHUB_STEP_SUMMARY
           echo "Target environment for deployment: ${{ github.event.inputs.target_env }}"   >> $GITHUB_STEP_SUMMARY
 
        - name: "Checkout ${{ github.repository }}"
