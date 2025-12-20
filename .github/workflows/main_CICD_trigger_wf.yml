@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       java-version:
-        description: 'Node.js version to use'
+        description: 'JAVA version to use'
         required: true
         type: string
       environment:
@@ -28,3 +28,4 @@ jobs:
     with:
       environment: '${{ github.event.inputs.environment }}'
       class: '${{ needs.calling-reusable-logic-CI.outputs.ci_class }}'
+
