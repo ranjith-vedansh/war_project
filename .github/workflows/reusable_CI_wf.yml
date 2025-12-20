@@ -24,17 +24,20 @@ jobs:
       class_output: ${{ steps.set-class.outputs.class }}
     
     steps:
-      - name: Checkout Code
+      - name: Checkout scm Code
         uses: actions/checkout@v4
+        
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ inputs.java-version }}   
+          java-version: ${{ inputs.java-version }}
+          
       - name: Verify Java Installation
         run: |
           echo "Running tests in ${{ inputs.environment }} environment..."  >> $GITHUB_STEP_SUMMARY
           java -version
+          
       - name: Set Class Output
         id: set-class
-
         run: echo "class=DevOps_CICD_Template" >> $GITHUB_OUTPUT
+
