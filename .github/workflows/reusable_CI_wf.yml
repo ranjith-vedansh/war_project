@@ -24,12 +24,13 @@ jobs:
       class_output: ${{ steps.set-class.outputs.class }}
     
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Install Java
+        uses: actions/setup-java@v3
         with:
           java-version: ${{ inputs.java-version }}     
-      - name: Run Tests
+      - name: Verify Java Installation
         run: |
           echo "Running tests in ${{ inputs.environment }} environment..."  >> $GITHUB_STEP_SUMMARY
           java -version
