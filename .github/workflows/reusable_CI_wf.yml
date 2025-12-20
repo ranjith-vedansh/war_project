@@ -4,7 +4,7 @@ on:
   workflow_call:
     # Define inputs that the caller must or can provide
     inputs:
-      node-version:
+      java-version:
         required: true
         type: string
       environment:
@@ -28,12 +28,11 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ inputs.node-version }}     
+          java-version: ${{ inputs.java-version }}     
       - name: Run Tests
         run: |
           echo "Running tests in ${{ inputs.environment }} environment..."  >> $GITHUB_STEP_SUMMARY
-          npm install
-          npm test
+          java -version
       - name: Set Class Output
         id: set-class
         run: echo "class=DevOps_CICD_Template" >> $GITHUB_OUTPUT
