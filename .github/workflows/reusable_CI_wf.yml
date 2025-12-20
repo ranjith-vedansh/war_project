@@ -11,18 +11,16 @@ on:
         required: false
         type: string
         default: 'staging'
-      # distribution:
-      #   required: false
-      #   type: string
-      #   default: 'temurin'
+      distribution:
+        required: false
+        type: string
+        default: 'temurin'
     
     outputs:
       ci_class:
         description: "The class of the CI template"
         value: ${{ jobs.build-and-test.outputs.class_output }}
 
-env:
-  distribution: 'temurin'
 
 jobs:
   job_1_pre-requsit:
@@ -55,6 +53,7 @@ jobs:
       - name: Set Class Output
         id: set-class
         run: echo "class=DevOps_CICD_Template" >> $GITHUB_OUTPUT
+
 
 
 
