@@ -12,9 +12,7 @@ on:
         required: true
         type: string
         default: 'staging'
-    # outputs:
-    #   java-version: ${{ github.event.inputs.java-version }}
-    #   environment: ${{ github.event.inputs.environment }}
+
 jobs:
   calling-reusable-logic-CI:
     uses: ./.github/workflows/reusable_CI_wf.yml
