@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Checkout scm Code
         uses: actions/checkout@v4
+          with:
+            path: 'project-repo'
         
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@v4
@@ -37,6 +39,7 @@ jobs:
           java-version: ${{ inputs.java-version }}
           distribution: ${{ inputs.distribution }}
           cache: maven
+          cache-dependency-path: '**/pom.xml'
           
       - name: Verify Java Installation
         run: |
@@ -46,5 +49,6 @@ jobs:
       - name: Set Class Output
         id: set-class
         run: echo "class=DevOps_CICD_Template" >> $GITHUB_OUTPUT
+
 
 
