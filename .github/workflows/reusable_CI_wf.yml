@@ -28,10 +28,12 @@ jobs:
       class_output: ${{ steps.set-class.outputs.class }}
     
     steps:
-      - name: Checkout scm Code
+      - name: Checkout ${{ github.repository }}
         uses: actions/checkout@v4
-          with:
-            path: 'project-repo'
+        with:
+          ref: master
+          path: 'project-repo'
+          fetch-depth: 0
         
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@v4
@@ -49,6 +51,7 @@ jobs:
       - name: Set Class Output
         id: set-class
         run: echo "class=DevOps_CICD_Template" >> $GITHUB_OUTPUT
+
 
 
 
