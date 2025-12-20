@@ -21,10 +21,8 @@ jobs:
       environment: '${{ github.event.inputs.environment }}'
 
   calling-reusable-logic-CD:
-    # if: needs.calling-reusable-logic-CI.outputs.ci_status == 'success'
+    if: 'needs.calling-reusable-logic-CI'
     uses: ./.github/workflows/reusable_CD_wf.yml
     with:
       environment: '${{ github.event.inputs.environment }}'
       class: '${{ needs.calling-reusable-logic-CI.outputs.ci_class }}'
-
-
