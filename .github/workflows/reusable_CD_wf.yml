@@ -1,5 +1,4 @@
-    name: Reusable CD Template
-
+name: Reusable CD Template
 on:
   workflow_call:
     # Define inputs that the caller must or can provide
@@ -12,14 +11,13 @@ on:
         type: string
         default: 'staging'
     
-    jobs:
-      deploy:
+jobs:
+    deploy:
         runs-on: ubuntu-latest
         steps:
-          - name: Checkout code
-            uses: actions/checkout@v3
-
-          - name: Deploy Application
-            run: |
-              echo "Deploying to environment: ${{ inputs.environment }}"   >> $GITHUB_STEP_SUMMARY
-              echo "Using class: ${{ inputs.class }}"   >> $GITHUB_STEP_SUMMARY
+        - name: Checkout code
+          uses: actions/checkout@v3
+        - name: Deploy Application
+          run: |
+            echo "Deploying to environment: ${{ inputs.environment }}"   >> $GITHUB_STEP_SUMMARY
+            echo "Using class: ${{ inputs.class }}"   >> $GITHUB_STEP_SUMMARY
