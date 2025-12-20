@@ -1,0 +1,32 @@
+name: Main App Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      node-version:
+        description: 'Node.js version to use'
+        required: true
+        type: string
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: string
+        default: 'staging'
+    # outputs:
+    #   node-version: ${{ github.event.inputs.node-version }}
+    #   environment: ${{ github.event.inputs.environment }}
+jobs:
+  calling-reusable-logic-CI:
+    id: CI-logic
+    uses: ./.github/workflows/reusable_CI_wf.yml
+    with:
+      node-version: '${{ github.event.inputs.node-version }}'
+      environment: '${{ github.event.inputs.environment }}'
+
+  calling-reusable-logic-CD:
+    id: CD-logic
+    needs: 'calling-reusable-logic-CI && success()'
+    uses: ./.github/workflows/reusable_CD_wf.yml
+    with:
+      environment: '${{ github.event.inputs.environment }}'
+      class: '${{ needs.calling-reusable-logic-CI.outputs.ci_class }}'

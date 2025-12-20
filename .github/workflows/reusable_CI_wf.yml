@@ -1,0 +1,39 @@
+name: Reusable CI Template
+
+on:
+  workflow_call:
+    # Define inputs that the caller must or can provide
+    inputs:
+      node-version:
+        required: true
+        type: string
+      environment:
+        required: false
+        type: string
+        default: 'staging'
+    
+    outputs:
+      ci_class:
+        description: "The class of the CI template"
+        value: ${{ jobs.build-and-test.outputs.class_output }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    outputs:
+      class_output: ${{ steps.set-class.outputs.class }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}     
+      - name: Run Tests
+        run: |
+          echo "Running tests in ${{ inputs.environment }} environment..."  >> $GITHUB_STEP_SUMMARY
+          npm install
+          npm test
+      - name: Set Class Output
+        id: set-class
+        run: echo "class=DevOps_CICD_Template" >> $GITHUB_OUTPUT
