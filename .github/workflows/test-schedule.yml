@@ -1,0 +1,30 @@
+name: Schedule Trigger Test
+
+on:
+  # This schedules the workflow to run every 15 minutes
+  schedule:
+    - cron: '*/5 * * * *'
+  
+  # This allows you to manually run the workflow from the 'Actions' tab
+  workflow_dispatch:
+
+jobs:
+  test-schedule:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Report Trigger Time
+        run: |
+          echo "Workflow triggered at: $(date)"    >> $GITHUB_STEP_SUMMARY
+          echo "Trigger event: ${{ github.event_name }}"    >> $GITHUB_STEP_SUMMARY
+
+      - name: Logic Check
+        run: |
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "##Success: This run was triggered by the Cron schedule."    >> $GITHUB_STEP_SUMMARY
+          else
+            echo "##This run was triggered manually via workflow_dispatch."    >> $GITHUB_STEP_SUMMARY
+          fi
