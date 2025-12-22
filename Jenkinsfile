@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('SCM checkout') {
             steps {
-                echo 'Checking out remote repo to Jenkins Local Workspace'
+                // echo 'Checking out remote repo to Jenkins Local Workspace'
                 git branch: 'master', url: 'https://github.com/ranjith-vedansh/java-hello-world-war.git'
             }
         }
