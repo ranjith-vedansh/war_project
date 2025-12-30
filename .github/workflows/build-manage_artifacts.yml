@@ -77,3 +77,4 @@ jobs:
           mvn clean package
           echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "Successfully built version: $(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_STEP_SUMMARY
+          ls -Rlrt  >> $GITHUB_STEP_SUMMARY
