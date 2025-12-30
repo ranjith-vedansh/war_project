@@ -1,9 +1,10 @@
 name: Build and Manage Artifacts for Java Application
+
 on:
   workflow_dispatch:
     inputs:
       decide_version:
-        description: 'Accept type of artifact'
+        description: 'Select the type of version bump'
         required: true
         type: choice
         options:
@@ -20,7 +21,8 @@ on:
 jobs:
   Java_CI_job:
     runs-on: ubuntu-latest
-    # Added permissions to allow the bot to push code changes
+    
+    # Permissions required to push the version change back to the repository
     permissions:
       contents: write
       
@@ -28,53 +30,67 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          # Use 0 to fetch all history for proper tagging/versioning
           fetch-depth: 0 
 
-      - name: Set up JDK 17
+      - name: Set up JDK 17 and Maven Central/Nexus
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
+          # These IDs MUST match the <id> in your pom.xml distributionManagement
+          server-id: nexus-snapshots
+          server-username: NEXUS_USERNAME
+          server-password: NEXUS_PASSWORD
 
-      - name: Bump Version and Commit
+      - name: Bump Version and Commit to Git
+        if: github.event_name == 'workflow_dispatch'
         run: |
-          # 1. Get current version
+          # 1. Get current version from pom.xml
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "Current Version: $CURRENT_VERSION"
+          echo "Current Version detected: $CURRENT_VERSION"
 
-          # 2. Determine New Version
+          # 2. Logic to determine new version string
           CHOICE="${{ github.event.inputs.decide_version }}"
           BASE=$(echo $CURRENT_VERSION | cut -d'-' -f1)
           MAJOR=$(echo $BASE | cut -d. -f1)
           MINOR=$(echo $BASE | cut -d. -f2)
-          PATCH=$(echo $BASE | cut -d. -f3)
 
           if [ "$CHOICE" == "Minor" ]; then
             NEW_VERSION="$MAJOR.$((MINOR + 1)).0"
           elif [ "$CHOICE" == "Release" ]; then
-            NEW_VERSION="$BASE" # Strips suffix if manually set
+            NEW_VERSION="$BASE"
           else
-            # Default to Snapshot logic
             NEW_VERSION="${BASE}-SNAPSHOT"
           fi
 
-          echo "New Version: $NEW_VERSION"
+          echo "Bumping to New Version: $NEW_VERSION"
 
-          # 3. Update pom.xml using the plugin
+          # 3. Apply change to pom.xml
           mvn versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false
 
-          # 4. Git Commit and Push
+          # 4. Commit and Push back to GitHub
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add pom.xml
-          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
-          git push
-        
-      - name: Build the application
+          
+          # Only commit if there are changes
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: bump version to $NEW_VERSION [skip ci]" && git push)
+
+      - name: Build and Deploy to Nexus
         run: |
-          mvn clean package
-          echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "Successfully built version: $(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_STEP_SUMMARY
-          ls -Rlrt  >> $GITHUB_STEP_SUMMARY
+          # The 'deploy' goal handles both the build (package) and the upload to Nexus
+          mvn clean deploy -DskipTests
+        env:
+          # These map your GitHub Secrets to the setup-java environment variables
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+
+      - name: Build Summary
+        if: always()
+        run: |
+          FINAL_VER=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "### Build Result" >> $GITHUB_STEP_SUMMARY
+          echo "* **Artifact Version:** $FINAL_VER" >> $GITHUB_STEP_SUMMARY
+          echo "* **Nexus IP:** 13.232.124.242" >> $GITHUB_STEP_SUMMARY
+          echo "* **Status:** Deployment Attempted" >> $GITHUB_STEP_SUMMARY
