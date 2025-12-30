@@ -22,7 +22,6 @@ jobs:
   Java_CI_job:
     runs-on: ubuntu-latest
     
-    # Permissions required to push the version change back to the repository
     permissions:
       contents: write
       
@@ -32,25 +31,41 @@ jobs:
         with:
           fetch-depth: 0 
 
-      - name: Set up JDK 17 and Maven Central/Nexus
+      - name: Set up JDK 17 and Maven Settings
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-          # These IDs MUST match the <id> in your pom.xml distributionManagement
-          server-id: nexus-snapshots
+          # This creates a settings.xml. We use a dummy ID here because 
+          # we will handle the specific server IDs in the next step.
+          server-id: nexus-releases
           server-username: NEXUS_USERNAME
           server-password: NEXUS_PASSWORD
+
+      - name: Configure Maven Settings for Nexus
+        # This step ensures both Release and Snapshot IDs have the credentials
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings>
+            <servers>
+              <server>
+                <id>nexus-releases</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+              <server>
+                <id>nexus-snapshots</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+            </servers>
+          </settings>" > ~/.m2/settings.xml
 
       - name: Bump Version and Commit to Git
         if: github.event_name == 'workflow_dispatch'
         run: |
-          # 1. Get current version from pom.xml
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "Current Version detected: $CURRENT_VERSION"
-
-          # 2. Logic to determine new version string
           CHOICE="${{ github.event.inputs.decide_version }}"
           BASE=$(echo $CURRENT_VERSION | cut -d'-' -f1)
           MAJOR=$(echo $BASE | cut -d. -f1)
@@ -64,25 +79,18 @@ jobs:
             NEW_VERSION="${BASE}-SNAPSHOT"
           fi
 
-          echo "Bumping to New Version: $NEW_VERSION"
-
-          # 3. Apply change to pom.xml
           mvn versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false
 
-          # 4. Commit and Push back to GitHub
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add pom.xml
-          
-          # Only commit if there are changes
           git diff --quiet && git diff --staged --quiet || (git commit -m "chore: bump version to $NEW_VERSION [skip ci]" && git push)
 
       - name: Build and Deploy to Nexus
         run: |
-          # The 'deploy' goal handles both the build (package) and the upload to Nexus
-          mvn clean deploy -DskipTests
+          # Added -e for error visibility and --settings to ensure it uses our custom file
+          mvn clean deploy -DskipTests -e
         env:
-          # These map your GitHub Secrets to the setup-java environment variables
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
 
@@ -93,4 +101,3 @@ jobs:
           echo "### Build Result" >> $GITHUB_STEP_SUMMARY
           echo "* **Artifact Version:** $FINAL_VER" >> $GITHUB_STEP_SUMMARY
           echo "* **Nexus IP:** 13.232.124.242" >> $GITHUB_STEP_SUMMARY
-          echo "* **Status:** Deployment Attempted" >> $GITHUB_STEP_SUMMARY
