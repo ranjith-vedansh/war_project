@@ -1,0 +1,65 @@
+name: Build and Manage Artifacts for Java Application
+on:
+  workflow_dispatch:
+    inputs:
+      decide_version:
+        description: 'Accept type of artifact'
+        required: true
+        type: choice
+        options:
+          - Snapshot
+          - Minor
+          - Release
+        default: Snapshot
+    
+  push:
+    branches:
+      - main
+      - pre-production
+
+env:
+  Snapshot: 0.0.1
+  Minor: 0.1.0
+  Release: 1.0.0
+
+jobs:
+  Java_CI_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ${{ github.repository }}
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          
+      - name: Set Class Output
+        id: set-class
+        run: echo "class=DevOps_CICD_Template" >> $GITHUB_OUTPUT
+
+      - name: Install pre-requisite (Java and Maven)
+        run: |
+          echo "Verify Java installation"   >> $GITHUB_STEP_SUMMARY
+          if ! command -v java &> /dev/null
+          then
+              echo "Java not found. Installing OpenJDK..."   >> $GITHUB_STEP_SUMMARY
+              sudo apt-get update
+              sudo apt-get install -y openjdk-17-jdk
+          else
+              echo "Java is already installed:"   >> $GITHUB_STEP_SUMMARY
+              java --version
+          fi
+  
+          echo "Verify Maven installation"   >> $GITHUB_STEP_SUMMARY
+          if ! command -v mvn &> /dev/null
+          then
+              echo "Maven not found. Installing Maven..."   >> $GITHUB_STEP_SUMMARY
+              sudo apt-get update
+              sudo apt-get install -y maven
+          else
+              echo "Maven is already installed:"   >> $GITHUB_STEP_SUMMARY
+              mvn --version
+          fi
+      - name: Build the application
+        run: |
+          mvn clean package
+          echo "List of Files and Dirs"   >> $GITHUB_STEP_SUMMARY
+          ls -lrt   >> $GITHUB_STEP_SUMMARY
