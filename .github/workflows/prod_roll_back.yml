@@ -1,0 +1,69 @@
+name: Production Rollback
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rollback_logic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get Unstable Version from Server
+        id: check_env
+        run: |
+          CURRENT_UNSTABLE=$(ssh -o StrictHostKeyChecking=no ubuntu@13.232.124.242 "cat /var/www/demo_app/version.txt")
+          echo "Currently deployed (unstable): $CURRENT_UNSTABLE"
+          echo "bad_version=$CURRENT_UNSTABLE" >> $GITHUB_OUTPUT
+
+      ### 2. AUTHENTICATE AND FIND PREVIOUS STABLE IN NEXUS
+      - name: Fetch Last Stable Version from Nexus
+        id: nexus_search
+        env:
+          NEXUS_USER: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PWD: ${{ secrets.NEXUS_PASSWORD }}
+          BAD_VER: ${{ steps.check_env.outputs.bad_version }}
+        run: |
+          echo "Searching Nexus for the version immediately preceding $BAD_VER..."
+
+          REPO="maven-releases"
+          [ [[ "$BAD_VER" == *"-SNAPSHOT"* ]] ] && REPO="maven-snapshots"
+          
+          STABLE_VERSION=$(curl -u "$NEXUS_USER:$NEXUS_PWD" -X 'GET' \
+            "http://13.232.124.242:8081/service/rest/v1/search?repository=$REPO&sort=version&direction=desc" \
+            -H 'accept: application/json' | jq -r '.items[].version' | grep -v "$BAD_VER" | head -n 1)
+
+          if [ -z "$STABLE_VERSION" ]; then
+            echo "Error: Could not find a previous version in Nexus."
+            exit 1
+          fi
+
+          echo "Found Last Stable Version: $STABLE_VERSION"
+          echo "stable_version=$STABLE_VERSION" >> $GITHUB_OUTPUT
+
+      ### 3. DOWNLOAD ARTIFACT
+      - name: Download Stable Binary
+        env:
+          NEXUS_USER: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PWD: ${{ secrets.NEXUS_PASSWORD }}
+          VER: ${{ steps.nexus_search.outputs.stable_version }}
+        run: |
+          ARTIFACT_URL="http://13.232.124.242:8081/repository/maven-releases/com/app/main-app/$VER/main-app-$VER.jar"
+          
+          curl -u "$NEXUS_USER:$NEXUS_PWD" -L "$ARTIFACT_URL" -o rollback-artifact.jar
+
+      ### 4. EXECUTE ROLLBACK ON TARGET
+      - name: Deploy and Restart
+        run: |
+          echo "Deploying version ${{ steps.nexus_search.outputs.stable_version }} to Production..."
+          
+          scp -o StrictHostKeyChecking=no rollback-artifact.jar ${{ secrets.PROD_USER }}@13.232.124.242:/tmp/
+          
+          ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@13.232.124.242 << 'EOF'
+            sudo systemctl stop java-app
+            mv /tmp/rollback-artifact.jar /var/www/app/app.jar
+            # Update the version file so the next rollback check is accurate
+            echo "${{ steps.nexus_search.outputs.stable_version }}" > /var/www/app/version.txt
+            sudo systemctl start java-app
+          EOF
